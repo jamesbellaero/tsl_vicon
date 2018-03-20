@@ -27,6 +27,7 @@ Last edited by James Bell (jtb2013@gmail.com) on 3/20/18
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #include "quaternion.h"
 
@@ -73,10 +74,10 @@ int main(int argc, char** argv){
 	ros::init(argc,argv,"tsl_vicon");
 	ros::NodeHandle nh;
   subCygnus=nh.subscribe("/vicon/cygnus_tsl/cygnus_tsl/",1000,messageCallbackCygnus);
-  subCamera=nh.subscribe("/vicon/camera_tsl/camera_tsl",1000,messageCallbackCamera);
-
+  subCamera=nh.subscribe("/vicon/Camera_TSL/Camera_TSL",1000,messageCallbackCamera);//capital letters b/c people don't understand mixing camel case with underscores is poor form.
+  std::cout<<std::string(std::getenv("HOME"))+std::string("/vicon_out.txt")<<"\n";
   std::ofstream out;
-  out.open("../vicon_out.txt",std::ofstream::out);
+  out.open(std::string(std::getenv("HOME"))+std::string("/vicon_out.txt"),std::ofstream::out);
   out << "";//clear file
   out.close();
 	
@@ -91,7 +92,7 @@ int main(int argc, char** argv){
       float dx = (float)(locCyg.v[0]-locCam.v[0]);
       float dy = (float)(locCyg.v[1]-locCam.v[1]);
       float dz = (float)(locCyg.v[2]-locCam.v[2]);
-      out.open("/home/James/vicon_out.txt",std::ofstream::out | std::ofstream::app);
+      out.open(std::string(std::getenv("HOME"))+std::string("/vicon_out.txt"),std::ofstream::out | std::ofstream::app);
       out << tCyg.toNSec()<<","<<dx<<","<<dy<<","<<dz;
       for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
