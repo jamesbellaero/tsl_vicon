@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>orbot_server</name>
+  <name>tsl_writer</name>
   <version>0.1.0</version>
-  <description>Subscribes to transforms and sends them to omnibot</description>
+  <description>I made this b/c nasa gets hard over live tests</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
