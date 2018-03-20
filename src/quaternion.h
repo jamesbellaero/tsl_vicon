@@ -1,17 +1,21 @@
 #include <math.h>
 struct Vec4{
+	/*Quaternion. The first value is the scalar you heathens.*/
 	float v[4]={1,0,0,0};
 };
 
 struct Vec3{
+	/*for RPY representation*/
 	float v[3]={0};
 };
 
 struct DCM{
+	/*Rotation matrix, initializes to identity*/
 	float v[3][3]={{1,0,0},{0,1,0},{0,0,1}};
 };
 
 Vec3 Quat2RPY(Vec4 q){
+	/*I have no clue what rotation this is*/
 	float q0 = q.v[0]; //q0 = q.v[1];
 	float q1 = q.v[1]; //q1 = q.v[2];
 	float q2 = q.v[2]; //q2 = q.v[3];
@@ -55,6 +59,9 @@ DCM getRelativeRotation(DCM Rri, DCM Rbi){
 		}
 	}
 	DCM Rbr;
+	Rbr.v[0][0] = 0;
+	Rbr.v[1][1] = 0;
+	Rbr.v[2][2] = 0;
 	for(int i=0;i<3;i++){
 		for(int j=0;j<3;j++){
 			for(int k=0;k<3;k++){

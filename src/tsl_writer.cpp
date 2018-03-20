@@ -1,20 +1,24 @@
 /*
 DESCRIPTION: 
-Subscribes to the current and target locations of the orbot and sends the delta to the orbot.
+Subscribes to the Cygnus and Camera and writes the relative pose to a file. 
+File output is formatted as 
+
+Time (nanosecs), dx (meters), dy, dz, R11, R12, R13, R21, R22, R23, R31, R32, R33 \n
+
+Note that the delta position is defined as r_cyg-r_cam
+Also, the rotation matrix takes a vector from the camera frame to the cygnus frame. To reverse this, change it in quaternion.h
+  by switching the transposed matrix and reversing multiplication order. Or just complain to the author of this file.
 
 FUNCTIONS:
-void 	messageCallbackVicon(geometry_msgs::TransformStamped)
-	Subscribes to the orbot object on vicon at /vicon/orbot/orbot and assigns the pose to loc and att
-void	messageCallbackTarget(geometry_msgs::TransformStamped)
-	Subscribes to the target on /orbot_server/target and assigns the target pose to tarLoc and tarAtt
+void 	messageCallbackCygnus(geometry_msgs::TransformStamped)
+	Subscribes to the orbot object on vicon at /vicon/cygnus_tsl/cygnus_tsl and assigns the pose to locCyg, quatCyg
+void	messageCallbackCamera(geometry_msgs::TransformStamped)
+	Subscribes to the target on /vicon/camera_tsl/camera_tsl and assigns the pose to locCam, quatCam
 int 	main(int, char**)
-	Starts the subscribers and publisher, publishes delta between target and current pose to the /orbot_server/orbot_delta
+	Initializes the two subscribers, clears the file, then starts printing at ~9-10 Hz
 
-NOTES:
-	Would like to move this functionality into the orbot client eventually, since the client should be able to subscribe
-	to both on its own. Only currently using this for debugging/separation of tasks
 
-Last edited by James Bell on 1/9/18
+Last edited by James Bell (jtb2013@gmail.com) on 3/20/18
 */
 
 #include <ros/ros.h>
@@ -35,10 +39,9 @@ Vec3 locCyg,locCam;
 Vec4 quatCyg,quatCam;
 DCM dcmCyg, dcmCam, dcmCam2Cyg;
 void messageCallbackCygnus( geometry_msgs::TransformStamped t){
-  //const geometry_msgs::TransformStamped *t = &transform;
   std::string a =  t.header.frame_id;//currently unused
   tCyg = t.header.stamp;
-  //defined in quaternion.h
+
 
   locCyg.v[0] = t.transform.translation.x;
   locCyg.v[1] = t.transform.translation.y;
@@ -52,10 +55,9 @@ void messageCallbackCygnus( geometry_msgs::TransformStamped t){
 
 }
 void messageCallbackCamera(geometry_msgs::TransformStamped t){
-  //const geometry_msgs::TransformStamped *t = &transform;
   std::string a =  t.header.frame_id;//currently unused
   tCam = t.header.stamp;
-  //defined in quaternion.h
+
 
   locCam.v[0] = t.transform.translation.x;
   locCam.v[1] = t.transform.translation.y;
@@ -74,7 +76,7 @@ int main(int argc, char** argv){
   subCamera=nh.subscribe("/vicon/camera_tsl/camera_tsl",1000,messageCallbackCamera);
 
   std::ofstream out;
-  out.open("/home/James/vicon_out.txt",std::ofstream::out);
+  out.open("../vicon_out.txt",std::ofstream::out);
   out << "";//clear file
   out.close();
 	
@@ -85,11 +87,15 @@ int main(int argc, char** argv){
       dcmCyg = Quat2DCM(quatCyg);
       dcmCam = Quat2DCM(quatCam);
       dcmCam2Cyg = getRelativeRotation(dcmCam,dcmCyg);
+
+      float dx = (float)(locCyg.v[0]-locCam.v[0]);
+      float dy = (float)(locCyg.v[1]-locCam.v[1]);
+      float dz = (float)(locCyg.v[2]-locCam.v[2]);
       out.open("/home/James/vicon_out.txt",std::ofstream::out | std::ofstream::app);
-      out << tCyg.toNSec()<<"\t"<<(double)(locCyg.v[0])<<"\t"<<(double)(locCyg.v[1])<<"\t"<<(double)(locCyg.v[2]);
+      out << tCyg.toNSec()<<","<<dx<<","<<dy<<","<<dz;
       for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
-          out<<"\t"<<(double)(dcmCam2Cyg.v[i][j]);
+          out<<","<<(double)(dcmCam2Cyg.v[i][j]);
         }
       }
       out << "\n";
