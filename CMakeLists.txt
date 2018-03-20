@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
 
 project (tsl_writer)
-SET(GCC_FLAGS "-g -std=c++11")
+SET(GCC_FLAGS "-O0 -g -std=c++11")
 add_definitions(${GCC_FLAGS})
 
 find_package(catkin REQUIRED COMPONENTS

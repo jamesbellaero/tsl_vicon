@@ -33,6 +33,7 @@ ros::Subscriber subCygnus, subCamera;
 ros::Time tCyg, tCam;
 Vec3 locCyg,locCam;
 Vec4 quatCyg,quatCam;
+DCM dcmCyg, dcmCam, dcmCam2Cyg;
 void messageCallbackCygnus( geometry_msgs::TransformStamped t){
   //const geometry_msgs::TransformStamped *t = &transform;
   std::string a =  t.header.frame_id;//currently unused
@@ -64,7 +65,6 @@ void messageCallbackCamera(geometry_msgs::TransformStamped t){
   quatCam.v[2] = t.transform.rotation.y;
   quatCam.v[3] = t.transform.rotation.z;
 
-
 }
 
 int main(int argc, char** argv){
@@ -75,16 +75,28 @@ int main(int argc, char** argv){
 
   std::ofstream out;
   out.open("/home/James/vicon_out.txt",std::ofstream::out);
-  out <<"";
+  out << "";//clear file
   out.close();
 	
 	ros::Rate loop_rate(10);
 	while(ros::ok()){
-    if(tCyg.toNSec()==0)
-      continue;
-    out.open("/home/James/vicon_out.txt",std::ofstream::out | std::ofstream::app);
-    out << tCyg.toNSec()<<"\t"<<(double)(locCyg.v[0])<<"\t"<<(double)(locCyg.v[1])<<"\t"<<(double)(locCyg.v[2])<<"\t"<<(double)(quatCyg.v[0])<<"\t"<<(double)(quatCyg.v[1])<<"\t"<<(double)(quatCyg.v[2])<<"\t"<<(double)(quatCyg.v[3])<<"\n";
-    out.close();
+    if(tCyg.toNSec()!=0){
+      
+      dcmCyg = Quat2DCM(quatCyg);
+      dcmCam = Quat2DCM(quatCam);
+      dcmCam2Cyg = getRelativeRotation(dcmCam,dcmCyg);
+      out.open("/home/James/vicon_out.txt",std::ofstream::out | std::ofstream::app);
+      out << tCyg.toNSec()<<"\t"<<(double)(locCyg.v[0])<<"\t"<<(double)(locCyg.v[1])<<"\t"<<(double)(locCyg.v[2]);
+      for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+          out<<"\t"<<(double)(dcmCam2Cyg.v[i][j]);
+        }
+      }
+      out << "\n";
+      out.close();
+      std::cout<<"Wrote to file\n";
+    }
+
 	  ros::spinOnce();
 	  loop_rate.sleep();
 	}
